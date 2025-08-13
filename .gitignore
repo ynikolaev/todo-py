@@ -1,0 +1,98 @@
+# -----------------------
+# OS / Editor junk
+# -----------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+\#*\#
+.#*
+.idea/
+.vscode/
+
+# -----------------------
+# Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Virtual envs / pyenv / direnv
+.venv/
+venv/
+.python-version
+.envrc
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -----------------------
+# Django
+# -----------------------
+*.log
+logs/
+log/
+# Local dev DBs (even if you use Postgres in prod)
+db.sqlite3
+*.sqlite3
+
+# Collectstatic output (adjust if you track a custom static dir)
+staticfiles/
+static/
+media/
+
+# Local settings overrides
+local_settings.py
+settings_local.py
+
+# -----------------------
+# Celery
+# -----------------------
+celerybeat-schedule
+celerybeat.pid
+
+# -----------------------
+# Tests / Coverage / Lint
+# -----------------------
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+pytestdebug.log
+.mypy_cache/
+.ruff_cache/
+
+# -----------------------
+# Docker / Env files
+# -----------------------
+docker-compose.override.yml
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+
+# -----------------------
+# Databases / dumps
+# -----------------------
+*.sql
+*.sql.gz
+*.psql
+
+# -----------------------
+# Redis dump
+# -----------------------
+dump.rdb
+
+# -----------------------
+# Node
+# -----------------------
+node_modules/

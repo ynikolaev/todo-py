@@ -1,0 +1,29 @@
+line-length = 88
+target-version = "py311"
+exclude = ["migrations", "venv", ".venv", "build", "dist"]
+
+select = [
+    "F",    # pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "N",    # pep8-naming
+    "B",    # bugbear
+    "C90",  # mccabe complexity
+    "UP",   # pyupgrade
+    "S",    # bandit
+    "TID"   # tidy imports
+]
+
+ignore = [
+    "E501",  # line too long (handled by Black)
+    "B008"   # function call in default arguments
+]
+
+[isort]
+known-first-party = ["mob_rules"]
+combine-as-imports = true
+force-single-line = false
+
+[per-file-ignores]
+"tests/**/*.py" = ["S101"]
