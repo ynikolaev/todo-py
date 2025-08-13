@@ -1,102 +1,127 @@
-# Garage Payment Tracker
+# ToDo List — Django API + Celery + Telegram Bot
 
-This project automates **garage rental payment tracking** and generates **overdue notifications**.  
-It consists of two services running via **Docker Compose**:
-
-1. **garage-backend** - FastAPI service for:
-
-- Fetching garage payment data from Google Sheets
-- Parsing Sberbank statements
-- Calculating payment statuses (Received / Overdue / Pending)
-- Generating XLSX reports
-
-2. **garage-ui** - React-based frontend for:
-
-- Triggering payment checks
-- Displaying payment statuses
-- Downloading XLSX reports
+Этот проект предоставляет **бэкенд ToDo-листа** на Django/DRF с **тегированием категорий**, **пользовательскими задачами**, **кастомными детерминированными идентификаторами** и **уведомлениями о сроках выполнения** через Celery. **Telegram-бот** (Aiogram + aiogram-dialog) позволяет пользователям просматривать и добавлять задачи через чат. Все сервисы запускаются через **Docker Compose** (Django, PostgreSQL, Redis, Celery worker/beat, бот).
 
 ---
 
-## Prerequisites
+## Возможности
 
-- **Docker** >= 20.10
-- **Docker Compose** >= 1.29
-- **Make** utility installed
-- Google Sheets API credentials for accessing the rental table
-- Sberbank statement file (CSV, XLSX, or PDF)
-
----
-
-## How to Run in Development
-
-1. Start all services in detached mode using **Makefile**:
-
-```
-make run
-```
-
-This will execute:
-
-```
-docker-compose up -d
-```
-
-2. Access the services:
-
-- **Backend API:** http://localhost:8000
-- **Frontend UI:** http://localhost:3000
-
-3. To stop the services:
-
-```
-docker-compose down
-```
+- **Django + DRF API** для задач и категорий (CRUD, изоляция по пользователям)
+- **Отображение даты создания задачи** (видно в боте)
+- **Категории/теги** и флаг **выполнения задачи**
+- **Уведомления о сроках** через Telegram-бота
+- **Админка** для управления задачами и категориями
+- **Часовой пояс по умолчанию:** `America/Adak`
+- **Кастомные первичные ключи** (Snowflake-стиль, строки, сортируемые по времени; без UUID, случайных значений и автоинкремента БД)
 
 ---
 
-## Backend API Overview
+## Требования
 
-**Base URL:** `http://localhost:8000`
-
-Example endpoints:
-
-- `GET /` - Health check
-- `GET /payments/status` - Placeholder endpoint for payment status check
-
-The backend will later provide endpoints for:
-
-- Uploading Sberbank statements
-- Checking garage payment statuses
-- Generating XLSX reports
+- **Docker** ≥ 20.10
+- **Docker Compose** ≥ 1.29
+- **Make** (опционально, если используете Makefile)
+- **Токен Telegram-бота** от @BotFather
 
 ---
 
-## Environment Variables
+## Запуск (разработка)
 
-`garage-backend` requires a Google API credential file for Sheets access:
+1. Создайте и заполните `.env` (пример):
 
+```env
+# Django
+SECRET_KEY=change-me
+DEBUG=1
+ALLOWED_HOSTS=*
+
+# Database
+POSTGRES_DB=todo
+POSTGRES_USER=todo
+POSTGRES_PASSWORD=todo
+
+# Celery/Redis
+CELERY_BROKER_URL=redis:redis:6379/0
+CELERY_RESULT_BACKEND=redis:redis:6379/1
+
+# Bot
+BOT_TOKEN=123456:ABC-DEF
+BOT_SHARED_SECRET=supersecret
+BOT_INTERNAL_URL=http:bot:8080/internal/notify
+
+# Timezone
+TZ=America/Adak
 ```
-GOOGLE_CREDENTIALS=/app/credentials.json
+
+2. (Если используете Poetry) экспортируйте зависимости для сборки Docker:
+
+```bash
+poetry self add poetry-plugin-export
+poetry export -f requirements.txt -o backend/requirements.txt --without-hashes
+```
+
+3. Соберите и запустите:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+4. Инициализация базы:
+
+```bash
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py createsuperuser
 ```
 
 ---
 
-## Development Notes
+## Доступ
 
-- **Hot reload** is enabled for both backend (via `uvicorn --reload`) and frontend (`npm start`).
-- To add new garages or payment sums, update the Google Sheet. The backend will fetch the latest data on each request.
-- The system is designed to handle:
-- Changing garage count
-- Different Sberbank statement formats
-- End-of-month date adjustments
+- **API (DRF):** http:localhost:8000/api/
+- **Админка:** http:localhost:8000/admin
+- **Telegram:** отправьте `/start`, `/list`, `/add` своему боту
 
 ---
 
-## Next Steps
+## Обзор API (бэкенд)
 
-- Implement full XLSX report generation
-- Integrate Google Sheets API to fetch real data
-- Add file upload support for Sberbank statements
-- Display statuses in the frontend
-- Add Telegram or email notifications for overdue payments
+- `GET /api/tasks/` — список задач пользователя (с `created_at`, категориями)
+- `POST /api/tasks/` — создание задачи (`title`, опционально `description`, `due_at`, `category_ids`)
+- `PATCH /api/tasks/{id}/` — обновление задачи
+- `DELETE /api/tasks/{id}/` — удаление задачи
+- `GET/POST /api/categories/` — управление категориями
+- `POST /api/auth/telegram/` — авторизация бота (получение токена DRF по данным пользователя Telegram)
+
+**Аутентификация:** токен (`Authorization: Token <token>`). Бот получает и хранит токен автоматически при `/start`.
+
+---
+
+## Уведомления
+
+- Если у задачи установлено `due_at`, бэкенд планирует выполнение задачи в Celery с `eta=due_at`.
+- В указанное время Celery вызывает внутренний эндпоинт бота, который отправляет пользователю сообщение **«Задача к выполнению»**.
+
+---
+
+## Заметки по окружению
+
+- **Часовой пояс** установлен в `America/Adak` на уровне приложения и контейнера.
+- При передаче `due_at` предпочтительно использовать **ISO 8601 с временной зоной** (например, `2025-08-20T12:00:00-09:00`).
+
+---
+
+## Заметки по разработке
+
+- Django запускается через **Gunicorn** в контейнере; команды `manage.py` выполняются через `docker compose exec backend …`.
+- Бот использует **Aiogram + aiogram-dialog** и взаимодействует с API через сеть Docker.
+- Для масштабирования бота или воркера можно поднять дополнительные реплики и хранить сессии бота в Redis.
+
+---
+
+## Следующие шаги
+
+- Добавить диалоги для создания категорий и завершения задач в боте.
+- Реализовать пагинацию и ограничение запросов в API.
+- Перевести бота на webhook-режим за reverse-proxy.
+- Хранить токены пользователей бота в Redis для горизонтального масштабирования.
