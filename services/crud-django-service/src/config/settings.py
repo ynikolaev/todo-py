@@ -10,26 +10,42 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
+from datetime import timedelta
 from pathlib import Path
 
 from django.core.management.utils import get_random_secret_key
 
+from .config import service_config
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
+SECRET_KEY = (
+    service_config.DJANGO_SECRET_KEY.get_secret_value() or get_random_secret_key()
+)
 DEBUG = True
 
 # Timezone requirement
 TIME_ZONE = "America/Adak"
 USE_TZ = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["crud-django-service", "telegram_bot"]
 
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
-POSTGRES_DB = os.getenv("POSTGRES_DB", "todo_db")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "todo_admin")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+POSTGRES_HOST = service_config.POSTGRES_HOST
+POSTGRES_PORT = int(service_config.POSTGRES_PORT)
+POSTGRES_DB = service_config.POSTGRES_DB
+POSTGRES_USER = service_config.POSTGRES_USER
+POSTGRES_PASSWORD = (
+    service_config.POSTGRES_PASSWORD.get_secret_value()
+    if service_config.POSTGRES_PASSWORD
+    else None
+)
+
+SIMPLE_JWT = {
+    "ALGORITHM": "HS256",
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -39,7 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
     "django_celery_beat",
     "todo",
 ]
@@ -61,18 +77,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "PORT": os.getenv("POSTGRES_PORT"),
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": POSTGRES_HOST,
+        "PORT": POSTGRES_PORT,
+        "NAME": POSTGRES_DB,
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
         "OPTIONS": {"options": "-c search_path=todo_app,public"},
     },
 }
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -95,12 +111,22 @@ TEMPLATES = [
     },
 ]
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "botauth-cache",
+    }
+}
+
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = []
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Celery
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+CELERY_BROKER_URL = service_config.CELERY_BROKER_URL
+CELERY_RESULT_BACKEND = service_config.CELERY_RESULT_BACKEND
 CELERY_TIMEZONE = TIME_ZONE
+
+# Telegram bot settings
+TELEGRAM_BOT_TOKEN = service_config.TELEGRAM_BOT_TOKEN.get_secret_value()

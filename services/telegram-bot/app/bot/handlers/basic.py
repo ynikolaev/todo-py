@@ -1,6 +1,8 @@
 from aiogram import Router, types
 from aiogram.filters import Command, CommandStart
 
+from app.infra.http import api_client
+
 router = Router(name=__name__)
 
 
@@ -8,8 +10,11 @@ router = Router(name=__name__)
 async def cmd_start(message: types.Message) -> None:
     user = message.from_user
     name = user.full_name if user else "Stranger"
+    async with api_client() as client:
+        resp = await client.get("/healthz")
     await message.answer(
-        f"Hello, {name}!\nI'm TaskerBot. Use /help to see what I can do."
+        f"""Hello, {name}!\nI'm TaskerBot. Use /help to see what I can do.
+        \nHealth check response: {resp.status_code} {resp.reason_phrase}"""
     )
 
 

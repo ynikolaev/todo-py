@@ -7,6 +7,7 @@ services:
       - "8000:8000"
     volumes:
       - ../services/crud-django-service/src:/app/src
+      - shared_secrets:/shared
     env_file:
       - ../.env
     environment:
@@ -17,6 +18,12 @@ services:
       postgres-db:
         condition: service_healthy
     entrypoint: ["/app/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "[ -s /shared/service_refresh.token ] || exit 1"]
+      interval: 5s 
+      timeout: 3s
+      retries: 5
+      start_period: 3s
   redis:
     image: redis:alpine
     environment:
@@ -50,12 +57,17 @@ services:
       dockerfile: Dockerfile
     env_file: 
       - ../.env
+    volumes:
+      - shared_secrets:/shared:ro  # read-only
+    environment:
+      SERVICE_REFRESH_TOKEN_FILE: /shared/service_refresh.token
     depends_on:
       crud-django-service:
-        condition: service_started
+        condition: service_healthy
       postgres-db:
         condition: service_healthy
 
 volumes:
   postgres_data:
     name: todopy_postgres_data
+  shared_secrets: {}

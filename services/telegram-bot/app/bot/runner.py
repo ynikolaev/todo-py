@@ -11,7 +11,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from aiogram_dialog import setup_dialogs
 
-from app.dialogs import profile as profile_dialog
+from app.dialogs import profile as profile_dialog, tasks as tasks_dialog
 from app.infra.config import settings
 from app.infra.logging import setup_logging
 
@@ -23,6 +23,7 @@ async def _set_bot_commands(bot: Bot) -> None:
         [
             BotCommand(command="start", description="Start the bot"),
             BotCommand(command="help", description="How to use the bot"),
+            BotCommand(command="newtask", description="Create a new task"),
             BotCommand(command="profile", description="Set your profile name"),
             BotCommand(
                 command="profile_dialog", description="Set your profile name (dialog)"
@@ -55,6 +56,8 @@ async def run_polling() -> None:
     dp.include_router(profile.router)
     dp.include_router(profile_dialog.router)
     dp.include_router(profile_dialog.profile_dialog_window)
+    dp.include_router(tasks_dialog.router)
+    dp.include_router(tasks_dialog.tasks_dialog_window)
     dp.include_router(fallback.router)
 
     # Set bot commands shown in Telegram’s UI

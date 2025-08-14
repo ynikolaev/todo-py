@@ -1,12 +1,20 @@
+# api/urls.py
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import CategoryViewSet, TaskViewSet, TelegramAccountViewSet
+from .views import (
+    BotLinkViewSet,
+    CategoryViewSet,
+    TaskViewSet,
+    TelegramAccountViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"categories", CategoryViewSet, basename="category")
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(
-    r"telegram-account", TelegramAccountViewSet, basename="telegram-account"
+    r"telegram-accounts", TelegramAccountViewSet, basename="telegram-account"
 )
+router.register(r"link", BotLinkViewSet, basename="link")
 
-urlpatterns = router.urls
+urlpatterns = [path("", include(router.urls))]

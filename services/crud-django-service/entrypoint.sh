@@ -10,6 +10,10 @@ python /app/src/manage.py migrate --noinput
 # Collect static files
 python manage.py collectstatic --noinput
 
+# Create service refresh token
+python /app/src/manage.py emit_bot_refresh_token --out /shared/service_refresh.token
+chmod 600 /shared/service_refresh.token
+
 # Create superuser if it doesn't exist
 python <<'PY'
 import os, django

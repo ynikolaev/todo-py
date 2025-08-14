@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Task, TelegramAccount
+from .models import Category, Task, TelegramAccount, TelegramLinkCode
 
 
 @admin.register(Category)
@@ -18,4 +18,11 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(TelegramAccount)
 class TelegramAccountAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "chat_id")
+    list_display = ("user", "telegram_user_id", "chat_id", "linked_at")
+    search_fields = ("user__username", "telegram_user_id")
+
+
+@admin.register(TelegramLinkCode)
+class TelegramLinkCodeAdmin(admin.ModelAdmin):
+    list_display = ("code", "telegram_user_id", "expires_at", "used_at")
+    search_fields = ("code", "telegram_user_id")

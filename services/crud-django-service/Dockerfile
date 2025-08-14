@@ -44,6 +44,7 @@ RUN chmod +x /app/entrypoint.sh
 
 # Create non-root user
 RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN mkdir -p /shared && chown -R appuser:appuser /shared
 USER appuser
 
 # Expose Django/Gunicorn port

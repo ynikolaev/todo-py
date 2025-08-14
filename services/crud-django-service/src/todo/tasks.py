@@ -9,10 +9,6 @@ from django.utils import timezone
 
 from .models import Task
 
-TELEGRAM_BOT_TOKEN = (
-    settings.SECRET_KEY
-)  # placeholder; better use env var TELEGRAM_BOT_TOKEN
-
 
 @shared_task(
     bind=True,

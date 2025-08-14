@@ -1,10 +1,17 @@
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import QuerySet
-from rest_framework import mixins, permissions, viewsets
+from rest_framework import mixins, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 
-from .models import Category, Task, TelegramAccount
+from .models import Category, Task, TelegramAccount, TelegramLinkCode
+from .permissions import IsBotService, IsSignedBotCall
 from .serializers import CategorySerializer, TaskSerializer, TelegramAccountSerializer
 from .tasks import schedule_due_notification
+
+User = get_user_model()
 
 
 class IsOwner(permissions.BasePermission):
@@ -75,3 +82,33 @@ class TelegramAccountViewSet(
         obj, _ = TelegramAccount.objects.get_or_create(user=request.user)
         serializer = self.get_serializer(obj)
         return Response(serializer.data)
+
+
+class BotLinkViewSet(ViewSet):
+    permission_classes = [IsSignedBotCall, IsBotService]
+
+    @action(detail=False, methods=["post"], url_path="start")
+    def start(self, request):
+        tg_id = int(request.data["telegram_user_id"])
+        link = TelegramLinkCode.create_for(tg_id, ttl_minutes=10)
+        return Response({"code": link.code, "expires_at": link.expires_at})
+
+    @action(detail=False, methods=["post"], url_path="confirm")
+    @transaction.atomic
+    def confirm(self, request):
+        tg_id = int(request.data["telegram_user_id"])
+        code = str(request.data["code"])
+        chat_id = request.data.get("chat_id")
+
+        try:
+            TelegramLinkCode.verify(code, tg_id)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user, _ = User.objects.get_or_create(
+            username=f"tg_{tg_id}", defaults={"is_active": True}
+        )
+        TelegramAccount.objects.update_or_create(
+            telegram_user_id=tg_id, defaults={"user": user, "chat_id": chat_id}
+        )
+        return Response({"status": "linked", "user": user})
