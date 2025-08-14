@@ -1,0 +1,28 @@
+[project]
+name = "telegram-bot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiogram (>=3.21.0,<4.0.0)",
+    "aiogram-dialog (>=2.4.0,<3.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "uvicorn (>=0.35.0,<0.36.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.8"
+mypy = "^1.17.1"
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
+

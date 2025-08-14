@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "docker",
+			"path": "docker"
+		},
+		{
+			"name": "crud-django-service",
+			"path": "services/crud-django-service"
+		},
+		{
+			"name": "telegram-bot",
+			"path": "services/telegram-bot"
+		}
+	],
+	"settings": {}
+}
