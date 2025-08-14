@@ -1,4 +1,4 @@
-from aiogram import F, Router, types
+from aiogram import Router, types
 from aiogram.filters import Command, CommandStart
 
 router = Router(name=__name__)
@@ -16,7 +16,7 @@ async def cmd_start(message: types.Message) -> None:
 @router.message(Command("help"))
 async def cmd_help(message: types.Message) -> None:
     await message.answer(
-        "/start — greet the bot\n/help — this help\n/about — version & env info"
+        "/start — greet the bot\n/help — this help\n/profile - set your profile name\n/about — version & env info"
     )
 
 
@@ -36,8 +36,3 @@ async def cmd_about(message: types.Message) -> None:
         f"Env: {settings.APP_ENV}\n"
         f"DB: {settings.DATABASE_URL.host}:{settings.DATABASE_URL.port} / {settings.DATABASE_URL.path.lstrip('/')}"
     )
-
-
-@router.message(F.text.startswith("/"))
-async def unknown_command(message: types.Message) -> None:
-    await message.answer("Unknown command. Try /help")

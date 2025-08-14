@@ -7,12 +7,13 @@ from contextlib import suppress
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 from app.infra.config import settings
 from app.infra.logging import setup_logging
 
-from .handlers.basic import router as basic_router
+from .handlers import basic, fallback, profile
 
 
 async def _set_bot_commands(bot: Bot) -> None:
@@ -20,6 +21,7 @@ async def _set_bot_commands(bot: Bot) -> None:
         [
             BotCommand(command="start", description="Start the bot"),
             BotCommand(command="help", description="How to use the bot"),
+            BotCommand(command="profile", description="Set your profile name"),
             BotCommand(command="about", description="About this bot"),
         ]
     )
@@ -40,8 +42,10 @@ async def run_polling() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    dp = Dispatcher()
-    dp.include_router(basic_router)
+    dp = Dispatcher(storage=MemoryStorage())
+    dp.include_router(basic.router)
+    dp.include_router(profile.router)
+    dp.include_router(fallback.router)
 
     # Set bot commands shown in Telegram’s UI
     await _set_bot_commands(bot)
