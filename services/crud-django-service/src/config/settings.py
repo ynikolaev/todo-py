@@ -66,8 +66,17 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "OPTIONS": {"options": "-c search_path=todo_db,public"},
-    }
+        "OPTIONS": {"options": "-c search_path=public"},
+    },
+    "todo": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_READ_WRITE_USER"),
+        "PASSWORD": os.getenv("POSTGRES_READ_WRITE_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
+        "OPTIONS": {"options": "-c search_path=todo_app,public"},
+    },
 }
 
 REST_FRAMEWORK = {
@@ -97,7 +106,7 @@ TEMPLATES = [
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = []
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Celery

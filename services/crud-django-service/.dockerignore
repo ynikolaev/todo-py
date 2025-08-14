@@ -1,0 +1,76 @@
+# ========================================
+# Python cache / build artifacts
+# ========================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+develop-eggs/
+dist/
+parts/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Byte-compiled / optimized / DLL files
+*.pyd
+*.pyo
+
+# ========================================
+# Environment / virtualenv
+# ========================================
+.env
+.env.*
+.venv
+venv/
+ENV/
+env/
+env.bak/
+*.env
+
+# Poetry / Pipenv caches
+.cache/
+.pdm.toml
+.pip/
+pip-log.txt
+
+# ========================================
+# Django / application specific
+# ========================================
+*.sqlite3
+media/
+staticfiles/   # where collectstatic output goes
+
+# ========================================
+# Tests / coverage
+# ========================================
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# ========================================
+# Editor / IDE
+# ========================================
+*.log
+*.pot
+*.mo
+*.swp
+*~
+.project
+.idea/
+.vscode/
