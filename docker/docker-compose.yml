@@ -51,7 +51,10 @@ services:
     env_file: 
       - ../.env
     depends_on:
-      - crud-django-service
+      crud-django-service:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

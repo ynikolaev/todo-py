@@ -33,4 +33,4 @@ RUN pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 COPY . /app
 
 EXPOSE 8080
-CMD ["python","main.py"]
+CMD ["python","-m", "app"]
