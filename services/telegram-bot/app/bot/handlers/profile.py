@@ -22,8 +22,17 @@ async def cmd_profile(message: types.Message, state: FSMContext) -> None:
 
 @router.message(Command("cancel"))
 async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
-    await state.clear()
-    await message.answer("Cancelled. Nothing was changed.")
+    current_state = await state.get_state()
+
+    allowed_prefixes = ("ProfileStates:", "TaskStates:")
+
+    if current_state and current_state.startswith(allowed_prefixes):
+        await state.clear()
+        await message.answer("Cancelled. Nothing was changed.")
+    else:
+        await message.answer(
+            "You are not in a profile setup state. Use /profile to start."
+        )
 
 
 @router.message(ProfileStates.waiting_for_name, F.text & ~F.via_bot)
