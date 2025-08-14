@@ -1,4 +1,4 @@
-PROJECT_NAME = garage-py
+PROJECT_NAME = todo-py
 DOCKER_COMPOSE = docker compose -p $(PROJECT_NAME) -f docker/docker-compose.yml
 
 dev:

@@ -74,6 +74,7 @@ pytestdebug.log
 # Docker / Env files
 # -----------------------
 docker-compose.override.yml
+.poetry
 .env
 .env.*
 !.env.example
@@ -83,7 +84,6 @@ docker-compose.override.yml
 # -----------------------
 # Databases / dumps
 # -----------------------
-*.sql
 *.sql.gz
 *.psql
 

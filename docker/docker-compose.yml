@@ -1,15 +1,49 @@
 services:
-  garage-backend-service:
+  crud-django-service:
     build:
-      context: ../
-      dockerfile: garage-backend/Dockerfile
-    command: uvicorn src.app:app --host 0.0.0.0 --port 8001 --reload --reload-dir /app
+      context: ../services/crud-django-service/
+      dockerfile: Dockerfile
     ports:
-      - "8000:8001"
+      - "8000:8000"
     volumes:
-      - ../assets:/app/assets
-      - ../garage-backend:/app
+      - ../services/crud-django-service/src:/app/src
     env_file:
-      - ../garage-backend/.env
+      - ../.env
     environment:
-      - WATCHFILES_FORCE_POLLING=true
+      WORKER_ID: 1
+    depends_on:
+      redis:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy
+    entrypoint: ["/app/entrypoint.sh"]
+  redis:
+    image: redis:alpine
+    environment:
+      WORKER_ID: 2
+    ports:
+      - "6379:6379"
+
+  postgres-db:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      WORKER_ID: 3
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: todo_admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: todopy_postgres_data

@@ -17,7 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.http import JsonResponse
-from django.urls import path
+from django.urls import include, path
+from rest_framework.authtoken.views import obtain_auth_token
 
 
 def health(_request):
@@ -27,4 +28,6 @@ def health(_request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", health, name="health"),
+    path("api/token-auth/", obtain_auth_token),
+    path("api/", include("todo.urls")),
 ]
