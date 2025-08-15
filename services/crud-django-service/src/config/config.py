@@ -1,5 +1,11 @@
+import os
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
+
+REFRESH_FILE = os.environ.get(
+    "SERVICE_REFRESH_TOKEN_FILE", "/shared/service_refresh.token"
+)
 
 
 class ServiceConfig(BaseSettings):
@@ -37,6 +43,18 @@ class ServiceConfig(BaseSettings):
     # Celery
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
+
+    @property
+    def SERVICE_REFRESH_TOKEN(self) -> str:  # noqa: N802
+        with open(REFRESH_FILE) as f:
+            result = f.read().strip()
+            import base64
+            import json
+
+            h, p, _ = result.split(".")
+            payload = json.loads(base64.urlsafe_b64decode(p + "=="))
+            print("token_type:", payload.get("token_type"), "exp:", payload.get("exp"))
+        return result
 
     class Config:
         env_prefix = ""

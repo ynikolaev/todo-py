@@ -11,6 +11,7 @@ from .security import verify_hmac
 class IsSignedBotCall(permissions.BasePermission):
     def has_permission(self, request, view):
         verify_hmac(request)
+        print("HMAC verification passed")
         return True
 
 
@@ -27,4 +28,5 @@ class IsBotService(permissions.BasePermission):
             raise exceptions.PermissionDenied(
                 "This endpoint is only accessible by the bot service user."
             )
+        print("Bot service user permission granted")
         return True

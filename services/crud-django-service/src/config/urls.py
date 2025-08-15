@@ -18,6 +18,14 @@ Including another URLconf
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
@@ -25,10 +33,18 @@ def health(_request):
     return JsonResponse({"status": "ok"})
 
 
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])  # <- force SimpleJWT
+@permission_classes([IsAuthenticated])
+def whoami(request):
+    return Response({"user": getattr(request.user, "username", None)})
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("healthz/", health, name="health"),
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("healthz", health, name="health"),
+    path("api/whoami", whoami),
+    path("api/token", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/", include("todo.urls")),
 ]

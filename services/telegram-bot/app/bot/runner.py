@@ -4,6 +4,7 @@ import asyncio
 import logging
 from contextlib import suppress
 
+import httpx
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -14,8 +15,27 @@ from aiogram_dialog import setup_dialogs
 from app.dialogs import profile as profile_dialog, tasks as tasks_dialog
 from app.infra.config import settings
 from app.infra.logging import setup_logging
+from app.middlewares.auth_middleware import DjangoAuthMiddleware
 
 from .handlers import basic, fallback, profile
+
+
+async def _auth_self_test(mw: DjangoAuthMiddleware) -> None:
+    """
+    1) Ensure we can obtain an access token via the middleware.
+    2) Call a protected endpoint (/api/whoami) with it.
+    Raises on failure so the process doesn’t start half-broken.
+    """
+
+    API_BASE = str(settings.DJANGO_API_BASE).rstrip("/")  # noqa: N806
+    token = await mw.get_access_token()
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        r = await client.get(
+            f"{API_BASE}/api/whoami", headers={"Authorization": f"Bearer {token}"}
+        )
+        if r.status_code != 200:
+            # Include response body for quick diagnosis
+            raise RuntimeError(f"Auth self-test failed: {r.status_code} {r.text}")
 
 
 async def _set_bot_commands(bot: Bot) -> None:
@@ -49,6 +69,12 @@ async def run_polling() -> None:
     )
 
     dp = Dispatcher(storage=MemoryStorage())
+    auth_middleware = DjangoAuthMiddleware()
+    dp.update.middleware(auth_middleware)
+
+    # Self-test (optional skip via env)
+    if not getattr(settings, "SKIP_AUTH_SELF_TEST", False):
+        await _auth_self_test(auth_middleware)
 
     setup_dialogs(dp)
 

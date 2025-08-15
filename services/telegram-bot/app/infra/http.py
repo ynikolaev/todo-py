@@ -12,9 +12,10 @@ import httpx
 from app.infra.config import settings
 
 DEFAULT_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
-API_BASE = settings.DJANGO_API_BASE
+API_BASE = str(settings.DJANGO_API_BASE).rstrip("/")
+TOKEN_URL = f"{API_BASE}/api/token/"
+REFRESH_URL = f"{API_BASE}/api/token/refresh/"
 BOT_SHARED_SECRET = settings.TELEGRAM_BOT_SHARED_SECRET.get_secret_value()
-LONG_ACCESS_TOKEN = settings.SERVICE_REFRESH_TOKEN
 
 
 def sign(body_bytes: bytes, method: str, path: str):
@@ -35,18 +36,23 @@ async def sign_request(request: httpx.Request):
     sig_headers = sign(body_bytes, request.method.upper(), request.url.path)
     request.headers.update(
         {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LONG_ACCESS_TOKEN}",
             **sig_headers,
         }
     )
 
 
 @asynccontextmanager
-async def api_client() -> AsyncIterator[httpx.AsyncClient]:
+async def api_client(api_token: str) -> AsyncIterator[httpx.AsyncClient]:
+    auth_header = {"Authorization": f"Bearer {api_token}"} if api_token else {}
     async with httpx.AsyncClient(
-        base_url=str(API_BASE),
+        base_url=API_BASE,
         timeout=DEFAULT_TIMEOUT,
+        headers={
+            **auth_header,
+            "Accept": "application/json",
+            "User-Agent": "TaskerBot/1.0",
+            "Content-Type": "application/json",
+        },
         event_hooks={"request": [sign_request]},
     ) as client:
         yield client

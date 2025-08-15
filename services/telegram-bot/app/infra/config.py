@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     # Bot settings
     TELEGRAM_BOT_TOKEN: SecretStr | None = None
     TELEGRAM_BOT_SHARED_SECRET: SecretStr = SecretStr("dummy_secret")
+    TELEGRAM_BOT_SERVICE_USERNAME: str = "dummy_bot_service"
+    TELEGRAM_BOT_SERVICE_PASSWORD: SecretStr = SecretStr("dummy_password")
+
+    # Redis settings
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
 
     # Django settings
     DJANGO_API_BASE: AnyUrl = AnyUrl("http://crud-django-service:8000")
@@ -43,6 +49,12 @@ class Settings(BaseSettings):
     def SERVICE_REFRESH_TOKEN(self) -> str:  # noqa: N802
         with open(REFRESH_FILE) as f:
             result = f.read().strip()
+            import base64
+            import json
+
+            h, p, _ = result.split(".")
+            payload = json.loads(base64.urlsafe_b64decode(p + "=="))
+            print("token_type:", payload.get("token_type"), "exp:", payload.get("exp"))
         return result
 
 

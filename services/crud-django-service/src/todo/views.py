@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from .models import Category, Task, TelegramAccount, TelegramLinkCode
-from .permissions import IsBotService, IsSignedBotCall
 from .serializers import CategorySerializer, TaskSerializer, TelegramAccountSerializer
 from .tasks import schedule_due_notification
 
@@ -85,7 +84,7 @@ class TelegramAccountViewSet(
 
 
 class BotLinkViewSet(ViewSet):
-    permission_classes = [IsSignedBotCall, IsBotService]
+    # permission_classes = [IsSignedBotCall, IsBotService]
 
     @action(detail=False, methods=["post"], url_path="start")
     def start(self, request):

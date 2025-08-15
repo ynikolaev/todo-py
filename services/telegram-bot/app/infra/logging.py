@@ -10,3 +10,5 @@ def setup_logging(level: str = "INFO") -> None:
     root.setLevel(level)
     root.handlers.clear()
     root.addHandler(handler)
+    logging.getLogger("aiogram").setLevel(level)
+    logging.getLogger("httpx").setLevel(level)

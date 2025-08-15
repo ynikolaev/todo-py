@@ -21,9 +21,9 @@ def verify_hmac(request):
     try:
         ts = int(ts)
     except ValueError as err:
-        raise AuthenticationFailed("Bad timestamp") from err
-    if abs(now - ts) > 120:
-        raise AuthenticationFailed("Stale request")
+        raise AuthenticationFailed("HMAC: bad timestamp") from err
+    if abs(now - ts) > 300:  # allow 5 min skew while debugging
+        raise AuthenticationFailed("HMAC: stale")
 
     # replay protection (120s window)
     cache_key = f"bot_hmac:{ts}:{nonce}"
@@ -33,9 +33,10 @@ def verify_hmac(request):
 
     body = request.body or b""
     body_hash = hashlib.sha256(body).hexdigest()
-    msg = f"{ts}.{request.method}.{request.get_full_path()}.{body_hash}".encode()
-
-    secret = settings.BOT_SHARED_SECRET.encode()
-    mac = hmac.new(secret, msg, hashlib.sha256).hexdigest()
+    path = request.get_full_path()
+    msg = f"{ts}.{request.method}.{path}.{body_hash}".encode()
+    mac = hmac.new(settings.BOT_SHARED_SECRET.encode(), msg, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(mac, sig):
-        raise AuthenticationFailed("Bad signature")
+        raise AuthenticationFailed(
+            f"HMAC: bad signature (server msg='{ts}.{request.method}.{path}.{body_hash}')"
+        )

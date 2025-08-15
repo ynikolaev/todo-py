@@ -33,6 +33,19 @@ else:
     print(f'Superuser {u} already exists; skipping')
 PY
 
+
+# wait for token file (non-empty)
+TIMEOUT="${WAIT_TIMEOUT:-180}"
+TOKEN_FILE="${SERVICE_REFRESH_TOKEN_FILE:-/shared/service_refresh.token}"
+end=$(( $(date +%s) + TIMEOUT ))
+while [ $(date +%s) -lt $end ]; do
+  if [ -s "$TOKEN_FILE" ]; then
+    echo "Token file present."
+    break
+  fi
+  sleep 1
+done
+
 # Start Gunicorn
 gunicorn config.wsgi:application --chdir /app/src \
     --bind 0.0.0.0:8000 --workers 3 --timeout 60 \
