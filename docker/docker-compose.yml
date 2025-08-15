@@ -56,10 +56,8 @@ services:
       dockerfile: Dockerfile
     env_file: 
       - ../.env
-    volumes:
-      - shared_secrets:/shared:ro  # read-only
     environment:
-      SERVICE_REFRESH_TOKEN_FILE: /shared/service_refresh.token
+      WORKER_ID: 4
     depends_on:
       crud-django-service:
         condition: service_healthy
@@ -69,4 +67,3 @@ services:
 volumes:
   postgres_data:
     name: todopy_postgres_data
-  shared_secrets: {}

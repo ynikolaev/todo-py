@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from .models import Category, Task, TelegramAccount
+from .models import Category, Task
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "name"]
+        fields = ["id", "name", "user_id"]
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -20,6 +20,7 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
+            "user_id",
             "description",
             "created_at",
             "due_at",
@@ -34,9 +35,3 @@ class TaskSerializer(serializers.ModelSerializer):
         if categories:
             task.categories.set(categories)
         return task
-
-
-class TelegramAccountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TelegramAccount
-        fields = ["id", "chat_id"]

@@ -22,7 +22,7 @@ def notify_task_due(task_id: int) -> None:
         task = Task.objects.select_related("user").get(id=task_id)
         if task.is_done:
             return
-        tg = getattr(task.user, "tg", None)
+        tg = getattr(task.user_id, "tg", None)
         if tg and tg.chat_id:
             text = f"⏰ Task due now:\n{task.title}\nCreated: {timezone.localtime(task.created_at)}"
             requests.post(

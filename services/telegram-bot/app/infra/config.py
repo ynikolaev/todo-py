@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     APP_ENV: str = "dev"
     LOG_LEVEL: str = "INFO"
+    SKIP_AUTH_SELF_TEST: bool = False
 
     # Bot settings
     TELEGRAM_BOT_TOKEN: SecretStr | None = None
