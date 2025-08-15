@@ -27,7 +27,12 @@ DEBUG = True
 TIME_ZONE = "America/Adak"
 USE_TZ = True
 
-ALLOWED_HOSTS = ["crud-django-service", "telegram_bot"]
+ALLOWED_HOSTS = [
+    "crud-django-service",
+    "telegram_bot",
+    "localhost",
+    "127.0.0.1",
+]
 
 POSTGRES_HOST = service_config.POSTGRES_HOST
 POSTGRES_PORT = int(service_config.POSTGRES_PORT)
