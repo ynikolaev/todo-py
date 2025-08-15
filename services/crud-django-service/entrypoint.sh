@@ -10,9 +10,8 @@ python /app/src/manage.py migrate --noinput
 # Collect static files
 python manage.py collectstatic --noinput
 
-# Create service refresh token
-python /app/src/manage.py emit_bot_refresh_token --out /shared/service_refresh.token
-chmod 600 /shared/service_refresh.token
+# Create telegram bot user if it doesn't exist
+python /app/src/manage.py emit_bot_refresh_token
 
 # Create superuser if it doesn't exist
 python <<'PY'
@@ -32,19 +31,6 @@ if not User.objects.filter(username=u).exists():
 else:
     print(f'Superuser {u} already exists; skipping')
 PY
-
-
-# wait for token file (non-empty)
-TIMEOUT="${WAIT_TIMEOUT:-180}"
-TOKEN_FILE="${SERVICE_REFRESH_TOKEN_FILE:-/shared/service_refresh.token}"
-end=$(( $(date +%s) + TIMEOUT ))
-while [ $(date +%s) -lt $end ]; do
-  if [ -s "$TOKEN_FILE" ]; then
-    echo "Token file present."
-    break
-  fi
-  sleep 1
-done
 
 # Start Gunicorn
 gunicorn config.wsgi:application --chdir /app/src \
