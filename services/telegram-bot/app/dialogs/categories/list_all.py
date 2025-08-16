@@ -250,7 +250,6 @@ categories_list_dialog = Dialog(
 
 @router.message(Command("list_categories"))
 async def start_categories(message: types.Message, dialog_manager: DialogManager):
-    # You can pass page_size via start_data if you want a different default
     await dialog_manager.start(
         CategoryListDlg.categories,
         mode=StartMode.RESET_STACK,

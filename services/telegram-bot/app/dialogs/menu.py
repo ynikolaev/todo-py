@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from aiogram_dialog import Dialog, StartMode, Window
+from aiogram import Router, types
+from aiogram.filters import Command
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Button, Row
 from aiogram_dialog.widgets.text import Const
 
@@ -10,6 +12,8 @@ from app.dialogs.states import (
     CreateTaskDlg,
     MenuDlg,
 )
+
+router = Router(name=__name__)
 
 
 async def to_categories(_, __, c):
@@ -48,3 +52,11 @@ menu_window = Window(
     state=MenuDlg.main,
 )
 menu_dialog = Dialog(menu_window)
+
+
+@router.message(Command("main"))
+async def start_categories(message: types.Message, dialog_manager: DialogManager):
+    await dialog_manager.start(
+        MenuDlg.main,
+        mode=StartMode.RESET_STACK,
+    )

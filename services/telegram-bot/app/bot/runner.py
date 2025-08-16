@@ -51,16 +51,7 @@ async def _auth_self_test(mw: DjangoAuthMiddleware) -> None:
 async def _set_bot_commands(bot: Bot) -> None:
     await bot.set_my_commands(
         [
-            BotCommand(command="list_categories", description="👀 Show categories"),
-            BotCommand(command="new_task", description="🆕 Create a new task"),
-            BotCommand(command="new_category", description="📂 Create a new category"),
-            BotCommand(command="newtask", description="🔔 Create a new task"),
-            BotCommand(command="help", description="ℹ️ How to use the bot"),
-            # BotCommand(command="profile", description="Set your profile name"),
-            # BotCommand(
-            #     command="profile_dialog", description="Set your profile name (dialog)"
-            # ),
-            # BotCommand(command="about", description="About this bot"),
+            BotCommand(command="main", description="👀 Show menu"),
         ]
     )
 
@@ -94,6 +85,7 @@ async def run_polling() -> None:
     dp.include_router(profile_dialog.router)
     dp.include_router(profile_dialog.profile_dialog_window)
     dp.include_router(menu_dialog.menu_dialog)
+    dp.include_router(menu_dialog.router)
     dp.include_router(categories_dialog.category_create_dialog_window)
     dp.include_router(categories_dialog.router)
     dp.include_router(categories_list_dialog.categories_list_dialog)
