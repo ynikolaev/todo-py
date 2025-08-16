@@ -1,15 +1,12 @@
-from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from todo.api.pagination import DefaultPagination
 
-from .models import Category, Task
-from .serializers import CategorySerializer, TaskSerializer
+from .models import Category, Task, TelegramAccount
+from .serializers import CategorySerializer, TaskSerializer, TelegramAccountSerializer
 from .tasks import schedule_due_notification
-
-User = get_user_model()
 
 
 class IsOwner(permissions.BasePermission):
@@ -18,20 +15,32 @@ class IsOwner(permissions.BasePermission):
         return owner_id == request.user.id
 
 
+class TelegramAccountViewSet(viewsets.ModelViewSet):
+    queryset = TelegramAccount.objects.all().order_by("user_id")
+    serializer_class = TelegramAccountSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = DefaultPagination
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all().order_by("name")
+    queryset = Category.objects.all().select_related("tg")
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination
 
-    def get_queryset(self) -> QuerySet[Category]:  # type: ignore[override]
-        user_id = self.request.GET.get("user_id")
-        if not user_id:
-            raise DRFValidationError(
-                {"user_id": ["This field is required."]},
-                code=status.HTTP_400_BAD_REQUEST,
-            )
-        return Category.objects.filter(user_id=user_id).order_by("name")
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        # Filter categories by the authenticated user's Telegram account (list - GET - /categories/)
+        if self.action == "list":
+            user_id = self.request.GET.get("tg_user_id")
+            if not user_id:
+                raise DRFValidationError(
+                    {"tg_user_id": ["This field is required."]},
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
+            return qs.filter(tg__user_id=user_id).select_related("tg").order_by("name")
+        return qs
 
 
 class TaskViewSet(viewsets.ModelViewSet[Task, TaskSerializer]):
@@ -50,11 +59,18 @@ class TaskViewSet(viewsets.ModelViewSet[Task, TaskSerializer]):
     ]
 
     def get_queryset(self):  # type: ignore
-        user = self.request.user
+        user_id = self.request.GET.get("tg_user_id")
+        if not user_id:
+            raise DRFValidationError(
+                {"tg_user_id": ["This field is required."]},
+                code=status.HTTP_400_BAD_REQUEST,
+            )
         return (
-            Task.objects.filter(user=user)
-            .select_related("user")
-            .prefetch_related("categories")
+            Task.objects.filter(
+                tg__user_id=user_id
+            )  # filter via related TelegramAccount field
+            .select_related("tg")  # pre-fetch FK
+            .prefetch_related("categories")  # prefetch M2M
             .order_by("-created_at")
         )
 

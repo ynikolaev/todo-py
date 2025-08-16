@@ -19,15 +19,15 @@ from .models import Task
 )
 def notify_task_due(task_id: int) -> None:
     try:
-        task = Task.objects.select_related("user").get(id=task_id)
+        task = Task.objects.get(id=task_id)
         if task.is_done:
             return
-        tg = getattr(task.user_id, "tg", None)
-        if tg and tg.chat_id:
+        tg_account = task.tg
+        if tg_account and tg_account.chat_id:
             text = f"⏰ Task due now:\n{task.title}\nCreated: {timezone.localtime(task.created_at)}"
             requests.post(
                 f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                json={"chat_id": tg.chat_id, "text": text},
+                json={"chat_id": tg_account.chat_id, "text": text},
                 timeout=5,
             )
     except Task.DoesNotExist:

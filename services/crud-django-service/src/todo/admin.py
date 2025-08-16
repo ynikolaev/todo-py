@@ -8,16 +8,13 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "name",
-        "user_id",
+        "tg",
     )
-    search_fields = (
-        "name",
-        "user_id",
-    )
+    search_fields = ("name",)
 
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "user_id", "is_done", "created_at", "due_at")
-    list_filter = ("is_done", "categories", "user_id")
-    search_fields = ("title", "description", "user_id")
+    list_display = ("id", "title", "is_done", "created_at", "due_at", "tg")
+    list_filter = ("is_done", "categories", "tg")
+    search_fields = ("title", "description")

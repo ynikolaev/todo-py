@@ -5,57 +5,51 @@ from app.infra.http import api_client
 from .telegram import TelegramAccountDTO
 
 
-class TaskDTO(BaseModel):
+class CategoryDTO(BaseModel):
     id: int | None = None
-    title: str
-    description: str = ""
-    category_ids: list[int] = []
-    created_at: str | None = None
-    due_at: str | None = None
-    is_done: bool = False
+    name: str = ""
     tg: TelegramAccountDTO | None = None
 
 
-class TaskService:
+class CategoryService:
     def __init__(self, api_token: str):
         self._api_client = api_client
         self._token = api_token
 
-    async def get_tasks(
+    async def get_categories(
         self, page: int = 1, page_size: int = 20, user_id: str = ""
     ) -> dict:
         async with self._api_client(self._token) as client:
             r = await client.get(
-                "api/tasks/",
+                "api/categories/",
                 params={"page": page, "page_size": page_size, "tg_user_id": user_id},
             )
-        if r.status_code != 200:
-            return self._format_error(r)
+            if r.status_code != 200:
+                return self._format_error(r)
         return r.json()
 
-    async def create_task(self, task: TaskDTO) -> dict:
+    async def create_category(self, category: CategoryDTO) -> dict:
         async with self._api_client(self._token) as client:
             r = await client.post(
-                "api/tasks/",
-                json=task.model_dump(exclude_unset=True),
+                "api/categories/", json=category.model_dump(exclude_unset=True)
             )
         if r.status_code != 201:
             return self._format_error(r)
         return r.json()
 
-    async def update_task(self, task_id: int, task: TaskDTO) -> dict:
+    async def update_category(self, category_id: int, category: CategoryDTO) -> dict:
         async with self._api_client(self._token) as client:
-            r = await client.patch(
-                f"api/tasks/{task_id}/",
-                json=task.model_dump(exclude_unset=True),
+            r = await client.put(
+                f"api/categories/{category_id}/",
+                json=category.model_dump(exclude_unset=True),
             )
         if r.status_code != 200:
             return self._format_error(r)
         return r.json()
 
-    async def delete_task(self, task_id: int) -> dict | bool:
+    async def delete_category(self, category_id: str) -> dict | bool:
         async with self._api_client(self._token) as client:
-            r = await client.delete(f"api/tasks/{task_id}/")
+            r = await client.delete(f"api/categories/{category_id}/")
         if r.status_code not in (200, 204):
             return self._format_error(r)
         return True

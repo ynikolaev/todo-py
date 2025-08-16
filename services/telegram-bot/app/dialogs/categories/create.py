@@ -4,24 +4,30 @@ import logging
 
 from aiogram import Router, types
 from aiogram.filters import Command
-from aiogram.fsm.state import State, StatesGroup
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
+from aiogram_dialog.api.entities import ShowMode
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
-from app.infra.http import api_client
+from app.dialogs.menu import MenuDlg
+from app.dialogs.states import CategoryCreateDlg
+from app.services.categories import CategoryDTO, CategoryService
+from app.services.telegram import TelegramAccountDTO
 
 router = Router(name=__name__)
 
 
-# --- Dialog states ---
-class CreateDlg(StatesGroup):
-    name = State()
-    confirm = State()
-
-
 # --- Widget callbacks & getters ---
+
+
+async def on_cancel_to_menu(
+    callback: types.CallbackQuery, button: Button, manager: DialogManager
+):
+    await callback.answer("❌ Cancelled")
+    await manager.start(
+        MenuDlg.main, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND
+    )
 
 
 async def on_name_input(
@@ -68,7 +74,7 @@ async def on_confirm(
     if not callback.message or not name:
         await callback.answer("No category name provided.")
         return
-    # Non-blocking toast while we do the network call
+
     try:
         await callback.answer("⏳ Creating…", show_alert=False)
     except Exception as e:
@@ -76,26 +82,22 @@ async def on_confirm(
         pass
 
     api_token = manager.middleware_data.get("api_token") or ""
-    user_id = callback.from_user.id
-    async with api_client(api_token) as client:
-        r = await client.post(
-            "api/categories/", json={"name": name, "user_id": user_id}
+    category_service = CategoryService(api_token=api_token)
+
+    tg_dto = TelegramAccountDTO.from_callback(callback)
+    category_dto = CategoryDTO(name=name, tg=tg_dto)
+    result = await category_service.create_category(category_dto)
+    if "error" in result:
+        await callback.message.answer(f"❌ Error creating category:\n{result['error']}")
+        await manager.switch_to(state=CategoryCreateDlg.name, show_mode=ShowMode.EDIT)
+    else:
+        await callback.message.answer(
+            f"📂 Category '{result['name']}' created successfully!"
         )
-
-    if r.status_code != 201:
-        try:
-            detail = r.json()
-        except Exception:
-            detail = r.text
-        if isinstance(detail, dict):
-            detail = detail.get("non_field_errors", "Unknown error")
-        await callback.message.answer(f"❌ Error creating category:\n{detail[0]}")
-        return
-
-    manager.dialog_data["id"] = r.json().get("id")
-    await callback.answer("✅ Created!")
-    await callback.message.answer(f"📂 Category “{name}” created successfully.")
-    await manager.done()
+        await manager.done()
+        await manager.start(
+            MenuDlg.main, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND
+        )
 
 
 # --- Windows ---
@@ -112,10 +114,8 @@ ask_name = Window(
         on_success=on_name_input,
         on_error=on_name_error,
     ),
-    Row(
-        Cancel(Const("❌ Cancel")),
-    ),
-    state=CreateDlg.name,
+    Row(Button(Const("❌ Cancel"), id="cancel_btn", on_click=on_cancel_to_menu)),
+    state=CategoryCreateDlg.name,
 )
 
 confirm = Window(
@@ -126,11 +126,11 @@ confirm = Window(
     ),
     Row(
         Button(Const("✅ Confirm"), id="confirm_btn", on_click=on_confirm),
-        SwitchTo(Const("✏️ Edit"), id="edit_btn", state=CreateDlg.name),
-        Cancel(Const("❌ Cancel")),
+        SwitchTo(Const("✏️ Edit"), id="edit_btn", state=CategoryCreateDlg.name),
+        Cancel(Const("❌ Cancel"), on_click=on_cancel_to_menu),
     ),
     getter=confirm_getter,
-    state=CreateDlg.confirm,
+    state=CategoryCreateDlg.confirm,
 )
 
 category_create_dialog_window = Dialog(ask_name, confirm)
@@ -139,4 +139,4 @@ category_create_dialog_window = Dialog(ask_name, confirm)
 # --- Command to start the dialog ---
 @router.message(Command("new_category"))
 async def start_new_category(message: types.Message, dialog_manager: DialogManager):
-    await dialog_manager.start(CreateDlg.name, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(CategoryCreateDlg.name, mode=StartMode.RESET_STACK)

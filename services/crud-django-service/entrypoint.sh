@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -e
+python manage.py makemigrations todo
 
 # Run migrations
 python /app/src/manage.py makemigrations
 
 # Run migrations
 python /app/src/manage.py migrate --noinput
+
+
+python manage.py showmigrations todo
 
 # Collect static files
 python manage.py collectstatic --noinput
