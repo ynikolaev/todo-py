@@ -18,8 +18,8 @@ from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Button, ListGroup, Row
 from aiogram_dialog.widgets.text import Const, Format
 
+from app.dialogs._states import CategoryListDlg
 from app.dialogs.menu import MenuDlg
-from app.dialogs.states import CategoryListDlg
 from app.services.categories import CategoryDTO, CategoryService
 
 logger = logging.getLogger(__name__)
@@ -238,7 +238,7 @@ confirm_delete_window = Window(
     state=CategoryListDlg.confirm_delete,
 )
 
-categories_list_dialog = Dialog(
+dialog = Dialog(
     list_window,
     edit_window,
     confirm_delete_window,

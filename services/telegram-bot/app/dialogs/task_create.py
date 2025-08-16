@@ -11,8 +11,8 @@ from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from app.dialogs._states import CreateTaskDlg
 from app.dialogs.menu import MenuDlg
-from app.dialogs.states import CreateTaskDlg
 from app.services.tasks import TaskDTO, TaskService
 from app.services.telegram import TelegramAccountDTO
 
@@ -196,7 +196,7 @@ confirm = Window(
     state=CreateTaskDlg.confirm,
 )
 
-task_create_dialog_window = Dialog(ask_title, ask_description, ask_due_date, confirm)
+dialog = Dialog(ask_title, ask_description, ask_due_date, confirm)
 
 
 # --- Command to start the dialog ---

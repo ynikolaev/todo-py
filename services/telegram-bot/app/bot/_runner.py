@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import logging
+import pkgutil
 from contextlib import suppress
 
 import httpx
@@ -12,22 +14,10 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from aiogram_dialog import setup_dialogs
 
-from app.dialogs import (
-    menu as menu_dialog,
-    profile as profile_dialog,
-)
-from app.dialogs.categories import (
-    create as categories_dialog,
-    list_all as categories_list_dialog,
-)
-from app.dialogs.tasks import (
-    create as create_tasks_dialog,
-)
+from app import dialogs
 from app.infra.config import settings
 from app.infra.logging import setup_logging
 from app.middlewares.auth_middleware import DjangoAuthMiddleware
-
-from .handlers import basic, fallback, profile
 
 
 async def _auth_self_test(mw: DjangoAuthMiddleware) -> None:
@@ -80,19 +70,13 @@ async def run_polling() -> None:
 
     setup_dialogs(dp)
 
-    dp.include_router(basic.router)
-    dp.include_router(profile.router)
-    dp.include_router(profile_dialog.router)
-    dp.include_router(profile_dialog.profile_dialog_window)
-    dp.include_router(menu_dialog.menu_dialog)
-    dp.include_router(menu_dialog.router)
-    dp.include_router(categories_dialog.category_create_dialog_window)
-    dp.include_router(categories_dialog.router)
-    dp.include_router(categories_list_dialog.categories_list_dialog)
-    dp.include_router(categories_list_dialog.router)
-    dp.include_router(create_tasks_dialog.task_create_dialog_window)
-    dp.include_router(create_tasks_dialog.router)
-    dp.include_router(fallback.router)
+    # Adding routers
+    for _, module_name, _ in pkgutil.iter_modules(dialogs.__path__):
+        module = importlib.import_module(f"app.dialogs.{module_name}")
+        if hasattr(module, "router"):
+            dp.include_router(module.router)
+        if hasattr(module, "dialog"):
+            dp.include_router(module.dialog)
 
     # Set bot commands shown in Telegram’s UI
     await _set_bot_commands(bot)

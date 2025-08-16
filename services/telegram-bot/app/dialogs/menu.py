@@ -6,7 +6,7 @@ from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Button, Row
 from aiogram_dialog.widgets.text import Const
 
-from app.dialogs.states import (
+from app.dialogs._states import (
     CategoryCreateDlg,
     CategoryListDlg,
     CreateTaskDlg,
@@ -51,7 +51,7 @@ menu_window = Window(
     ),
     state=MenuDlg.main,
 )
-menu_dialog = Dialog(menu_window)
+dialog = Dialog(menu_window)
 
 
 @router.message(Command("main"))

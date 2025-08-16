@@ -10,8 +10,8 @@ from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from app.dialogs._states import CategoryCreateDlg
 from app.dialogs.menu import MenuDlg
-from app.dialogs.states import CategoryCreateDlg
 from app.services.categories import CategoryDTO, CategoryService
 from app.services.telegram import TelegramAccountDTO
 
@@ -133,7 +133,7 @@ confirm = Window(
     state=CategoryCreateDlg.confirm,
 )
 
-category_create_dialog_window = Dialog(ask_name, confirm)
+dialog = Dialog(ask_name, confirm)
 
 
 # --- Command to start the dialog ---
