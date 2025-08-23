@@ -15,10 +15,10 @@ from aiogram_dialog import (
     Window,
 )
 from aiogram_dialog.widgets.input import ManagedTextInput, TextInput
-from aiogram_dialog.widgets.kbd import Button, ListGroup, Row
+from aiogram_dialog.widgets.kbd import Button, ListGroup, Row, Start
 from aiogram_dialog.widgets.text import Const, Format
 
-from app.dialogs._states import CategoryListDlg
+from app.dialogs._states import CategoryCreateDlg, CategoryListDlg, CreateTaskDlg
 from app.dialogs.menu import MenuDlg
 from app.services.categories import CategoryDTO, CategoryService
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = Router(name=__name__)
 
 
-PAGE_SIZE_DEFAULT = 10
+PAGE_SIZE_DEFAULT = 3
 
 
 # --- States ---
@@ -44,7 +44,9 @@ async def api_fetch_page(manager: DialogManager, page: int, page_size: int):
     category_service = CategoryService(api_token=api_token)
     tg_user_id = manager.event.from_user.id if manager.event.from_user else None
 
-    data = await category_service.get_categories(user_id=str(tg_user_id))
+    data = await category_service.get_categories(
+        user_id=str(tg_user_id), page=page, page_size=page_size
+    )
 
     items = data.get("results", []) or []
     count = int(data.get("count", len(items)))
@@ -68,13 +70,14 @@ async def edit_getter(dialog_manager: DialogManager, **_):
     }
 
 
-async def categories_get_data(dialog_manager: DialogManager, **_):
+async def categories_getter(dialog_manager: DialogManager, **_):
     page = int(dialog_manager.dialog_data.get("page", 1))
     page_size = int(dialog_manager.dialog_data.get("page_size", PAGE_SIZE_DEFAULT))
 
     items, count, error = await api_fetch_page(dialog_manager, page, page_size)
     total_pages = max(1, math.ceil(count / page_size)) if page_size else 1
     page = max(1, min(page, total_pages))
+    current_page_size = (page_size * page - page_size) + len(items)
 
     dialog_manager.dialog_data.update(
         page=page,
@@ -88,6 +91,8 @@ async def categories_get_data(dialog_manager: DialogManager, **_):
 
     return {
         "items": normalized,
+        "page_size": page_size,
+        "current_page_size": current_page_size,
         "page": page,
         "total_pages": total_pages,
         "total_count": count,
@@ -173,6 +178,17 @@ async def go_back_to_list(
     await manager.switch_to(CategoryListDlg.categories, show_mode=ShowMode.EDIT)
 
 
+async def on_new_task(c, b, m: DialogManager):
+    manager = cast(SubManager, m)
+    category_id = manager.item_id
+    items = m.dialog_data.get("items_cache", [])
+    item = next((it for it in items if str(it["id"]) == category_id), {})
+    await m.start(
+        CreateTaskDlg.title,
+        data={"category_id": category_id, "category_name": item["name"]},
+    )
+
+
 async def go_back_to_menu(
     callback: types.CallbackQuery,
     button: Button,
@@ -184,7 +200,7 @@ async def go_back_to_menu(
 # --- Widgets ---
 categories_list = ListGroup(
     Row(
-        Button(Format("{item[name]}"), id="view", on_click=on_edit),
+        Button(Format("{item[name]}"), id="view", on_click=on_new_task),
     ),
     Row(
         Button(Const("✏️"), id="edit", on_click=on_edit),
@@ -211,12 +227,13 @@ pagination_row = Row(
 
 # --- Window ---
 list_window = Window(
-    Const("📂 Your Categories:"),
+    Format("📂 Your Categories ({current_page_size}/{total_count})"),
     categories_list,
     pagination_row,
-    Button(Const("⬅️ Back"), id="back", on_click=go_back_to_menu),
+    Start(Const("❇️ New Category"), id="new_btn", state=CategoryCreateDlg.name),
+    Button(Const("⬅️ Menu"), id="back", on_click=go_back_to_menu),
     state=CategoryListDlg.categories,
-    getter=categories_get_data,
+    getter=categories_getter,
 )
 
 edit_window = Window(

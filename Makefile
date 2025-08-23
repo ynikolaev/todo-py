@@ -22,4 +22,4 @@ logs:
 
 # Rebuild all services
 build:
-	${DOCKER_COMPOSE} build --progress=plain
+	${DOCKER_COMPOSE} build

@@ -20,6 +20,13 @@ from app.infra.logging import setup_logging
 from app.middlewares.auth_middleware import DjangoAuthMiddleware
 
 
+def load_all_modules(package):
+    for _, name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        print(name)
+        module = importlib.import_module(name)
+        yield module
+
+
 async def _auth_self_test(mw: DjangoAuthMiddleware) -> None:
     """
     1) Ensure we can obtain an access token via the middleware.
@@ -70,9 +77,8 @@ async def run_polling() -> None:
 
     setup_dialogs(dp)
 
-    # Adding routers
-    for _, module_name, _ in pkgutil.iter_modules(dialogs.__path__):
-        module = importlib.import_module(f"app.dialogs.{module_name}")
+    # Adding routers and dialogs
+    for module in load_all_modules(dialogs):
         if hasattr(module, "router"):
             dp.include_router(module.router)
         if hasattr(module, "dialog"):

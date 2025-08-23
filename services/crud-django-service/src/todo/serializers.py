@@ -70,6 +70,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    tg = TelegramAccountSerializer(required=False, allow_null=True)
     categories = CategorySerializer(many=True, read_only=True)
     category_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -95,7 +96,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         categories = validated_data.pop("categories", [])
-        tg_data = validated_data["tg"]
+        tg_data = validated_data.pop("tg", None)
 
         # Find or create the TelegramAccount for this user
         tg_account, _ = TelegramAccount.objects.get_or_create(

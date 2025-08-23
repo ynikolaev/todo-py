@@ -18,6 +18,7 @@ class CategoryListDlg(StatesGroup):
 
 class CreateTaskDlg(StatesGroup):
     title = State()
+    categories = State()
     description = State()
     due_at = State()
     confirm = State()
