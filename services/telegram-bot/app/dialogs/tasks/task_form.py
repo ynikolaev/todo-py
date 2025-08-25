@@ -59,7 +59,7 @@ def scrolling_categories():
         categories_multiselect(),
         id="cats_scroll",
         width=1,
-        height=6,  # show up to 6 items at once
+        height=6,
         when=lambda data, _, __: bool(data["categories"]),
     )
 
@@ -312,7 +312,6 @@ async def on_create_confirm(callback, b, manager: DialogManager):
 
 async def on_edit_confirm(c, b, m: DialogManager):
     name = m.dialog_data["name"]
-    print(m.start_data)
     t_id = "Unknown"
     if isinstance(m.start_data, dict):
         t_id = m.start_data["id"]
